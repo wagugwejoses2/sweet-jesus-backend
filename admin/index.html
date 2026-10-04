@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sweet Jesus — Admin</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="admin.css">
+</head>
+<body>
+
+<!-- ============ LOGIN SCREEN ============ -->
+<div id="loginScreen" class="login-screen">
+  <div class="login-box">
+    <div class="login-mark">✝</div>
+    <h1>Sweet Jesus Admin</h1>
+    <p>Enter your admin key and the backend's API address to continue.</p>
+    <div class="form-field">
+      <label for="apiBaseInput">Backend API address</label>
+      <input type="text" id="apiBaseInput" placeholder="https://your-backend.onrender.com" autocomplete="off">
+    </div>
+    <div class="form-field">
+      <label for="adminKeyInput">Admin key</label>
+      <input type="password" id="adminKeyInput" placeholder="Your ADMIN_API_KEY" autocomplete="off">
+    </div>
+    <button id="loginBtn" class="btn-primary">Log in</button>
+    <p id="loginError" class="login-error"></p>
+    <p class="login-note">Nothing is saved — you'll need to re-enter this each time you open the dashboard. That's intentional: it keeps your admin key out of browser storage.</p>
+  </div>
+</div>
+
+<!-- ============ DASHBOARD ============ -->
+<div id="dashboard" class="dashboard" style="display:none;">
+  <header class="admin-header">
+    <div class="admin-header-inner">
+      <div class="admin-wordmark">✝ Sweet Jesus <span>Admin</span></div>
+      <button id="logoutBtn" class="btn-ghost">Log out</button>
+    </div>
+  </header>
+
+  <nav class="admin-tabs">
+    <button class="tab-btn active" data-tab="stories">Stories</button>
+    <button class="tab-btn" data-tab="resources">Resources</button>
+    <button class="tab-btn" data-tab="impact">Impact numbers</button>
+    <button class="tab-btn" data-tab="submissions">Form submissions</button>
+  </nav>
+
+  <main class="admin-main">
+
+    <!-- ---------- STORIES TAB ---------- -->
+    <section class="tab-panel active" id="panel-stories">
+      <div class="panel-head">
+        <h2>Stories</h2>
+        <button class="btn-primary" id="newStoryBtn">+ New story</button>
+      </div>
+      <p class="panel-note">A story can only be published once <strong>Consent confirmed</strong> is checked. This is enforced by the backend, not just this form.</p>
+      <div id="storiesList" class="item-list"></div>
+    </section>
+
+    <!-- ---------- RESOURCES TAB ---------- -->
+    <section class="tab-panel" id="panel-resources">
+      <div class="panel-head">
+        <h2>Resources</h2>
+        <button class="btn-primary" id="newResourceBtn">+ New resource</button>
+      </div>
+      <div id="resourcesList" class="item-list"></div>
+    </section>
+
+    <!-- ---------- IMPACT TAB ---------- -->
+    <section class="tab-panel" id="panel-impact">
+      <div class="panel-head">
+        <h2>Impact numbers</h2>
+      </div>
+      <p class="panel-note">These four metrics power the homepage counters. A metric only shows on the live site once <strong>Verified</strong> is checked — until then, the homepage keeps showing its placeholder figure.</p>
+      <div id="impactList" class="item-list"></div>
+    </section>
+
+    <!-- ---------- SUBMISSIONS TAB ---------- -->
+    <section class="tab-panel" id="panel-submissions">
+      <div class="panel-head">
+        <h2>Form submissions</h2>
+      </div>
+      <div class="filter-row">
+        <select id="submissionTypeSelect">
+          <option value="contact">Contact</option>
+          <option value="volunteer">Volunteer</option>
+          <option value="church-partner">Church partner</option>
+          <option value="teacher-academy">Teacher Academy</option>
+          <option value="safeguarding-concern">Safeguarding concern</option>
+        </select>
+        <button class="btn-secondary" id="refreshSubmissionsBtn">Refresh</button>
+      </div>
+      <div id="submissionsList" class="item-list"></div>
+    </section>
+
+  </main>
+</div>
+
+<!-- ============ STORY EDIT MODAL ============ -->
+<div id="storyModal" class="modal-overlay" style="display:none;">
+  <div class="modal">
+    <h3 id="storyModalTitle">New story</h3>
+    <div class="form-field">
+      <label for="storySlug">Slug (URL-safe, e.g. marys-story)</label>
+      <input type="text" id="storySlug">
+    </div>
+    <div class="form-field">
+      <label for="storyTag">Tag (e.g. "Child's story")</label>
+      <input type="text" id="storyTag">
+    </div>
+    <div class="form-field">
+      <label for="storyTitle">Title</label>
+      <input type="text" id="storyTitle">
+    </div>
+    <div class="form-field">
+      <label for="storySummary">Summary (shown on the Stories index)</label>
+      <input type="text" id="storySummary">
+    </div>
+    <div class="form-field">
+      <label for="storyBody">Full story (plain paragraphs, separated by a blank line)</label>
+      <textarea id="storyBody" rows="8"></textarea>
+    </div>
+    <label class="checkbox-row">
+      <input type="checkbox" id="storyConsent">
+      <span>Consent confirmed — a parent/guardian has approved sharing this story</span>
+    </label>
+    <label class="checkbox-row">
+      <input type="checkbox" id="storyPublished">
+      <span>Published — visible on the live site</span>
+    </label>
+    <p id="storyModalError" class="modal-error"></p>
+    <div class="modal-actions">
+      <button class="btn-ghost" id="storyModalCancel">Cancel</button>
+      <button class="btn-primary" id="storyModalSave">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============ RESOURCE EDIT MODAL ============ -->
+<div id="resourceModal" class="modal-overlay" style="display:none;">
+  <div class="modal">
+    <h3 id="resourceModalTitle">New resource</h3>
+    <div class="form-field">
+      <label for="resourceTitle">Title</label>
+      <input type="text" id="resourceTitle">
+    </div>
+    <div class="form-field">
+      <label for="resourceCategory">Category</label>
+      <select id="resourceCategory">
+        <option>Curriculum</option>
+        <option>Teacher resources</option>
+        <option>Parent resources</option>
+        <option>Safeguarding</option>
+        <option>Research &amp; learning</option>
+      </select>
+    </div>
+    <div class="form-field">
+      <label for="resourceFormat">Format (e.g. PDF, Video, Podcast)</label>
+      <input type="text" id="resourceFormat">
+    </div>
+    <div class="form-field">
+      <label for="resourceAgeRange">Age range (optional, e.g. "Ages 2-3")</label>
+      <input type="text" id="resourceAgeRange">
+    </div>
+    <div class="form-field">
+      <label for="resourceFileUrl">File URL (must start with http:// or https://)</label>
+      <input type="text" id="resourceFileUrl">
+    </div>
+    <label class="checkbox-row">
+      <input type="checkbox" id="resourcePublished">
+      <span>Published — visible on the live site</span>
+    </label>
+    <p id="resourceModalError" class="modal-error"></p>
+    <div class="modal-actions">
+      <button class="btn-ghost" id="resourceModalCancel">Cancel</button>
+      <button class="btn-primary" id="resourceModalSave">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============ CONFIRM DELETE MODAL ============ -->
+<div id="confirmModal" class="modal-overlay" style="display:none;">
+  <div class="modal modal-small">
+    <h3>Delete this?</h3>
+    <p id="confirmModalText">This can't be undone.</p>
+    <div class="modal-actions">
+      <button class="btn-ghost" id="confirmModalCancel">Cancel</button>
+      <button class="btn-danger" id="confirmModalOk">Delete</button>
+    </div>
+  </div>
+</div>
+
+<script src="admin.js"></script>
+</body>
+</html>
