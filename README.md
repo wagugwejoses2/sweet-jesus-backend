@@ -106,10 +106,11 @@ contact page (`contact.html`) already does this — see the inline
 `<script>` near the bottom of that page for the pattern to copy into the
 other form pages once they get real `<form>` markup.
 
-Set the deployed API's real address on every page that submits a form:
+Set the deployed API's real address once, in `frontend/site-config.js`
+(every page loads that file):
 
-```html
-<script>window.SWEET_JESUS_API_BASE = 'https://sweet-jesus-backend.onrender.com';</script>
+```js
+window.SWEET_JESUS_API_BASE = 'https://sweet-jesus-backend.onrender.com';
 ```
 
 Left unset, it defaults to `http://localhost:4000` — fine for local testing
@@ -118,15 +119,12 @@ only.
 **CMS content** (Stories, Resources, homepage impact numbers) is read
 directly from Supabase by the browser, using `cms-client.js` (in the
 frontend folder) and the public **anon key** — not through this backend at
-all, and not the service role key. Set these once per page, before
-`cms-client.js` loads:
+all, and not the service role key. Set both once, in
+`frontend/site-config.js`:
 
-```html
-<script>
-  window.SWEET_JESUS_SUPABASE_URL = 'https://your-project.supabase.co';
-  window.SWEET_JESUS_SUPABASE_ANON_KEY = 'your-anon-public-key';
-</script>
-<script src="cms-client.js"></script>
+```js
+window.SWEET_JESUS_SUPABASE_URL = 'https://your-project.supabase.co';
+window.SWEET_JESUS_SUPABASE_ANON_KEY = 'your-anon-public-key';
 ```
 
 Left blank, pages fall back to whatever static placeholder content already
@@ -159,10 +157,44 @@ You can also browse `submissions`, `stories`, `resources`, and
 `impact_metrics` directly in Supabase's own **Table Editor** — useful for
 quickly checking data without writing a curl command.
 
-## Editing CMS content today
+## Admin dashboard
 
-Until a proper admin UI exists, edit content directly in Supabase's Table
-Editor (Dashboard → Table Editor):
+A small admin dashboard lives in `admin/` — open `admin/index.html` in a
+browser (locally, or host the `admin/` folder anywhere; it's a static page
+with no build step). It covers:
+
+- **Stories** — create, edit, delete, publish. The "Consent confirmed"
+  checkbox is enforced server-side: a story cannot be published unless
+  consent is confirmed, whether you try to publish it on creation or by
+  editing an existing draft later — the backend checks the story's actual
+  stored consent value either way, not just what's in the current request.
+- **Resources** — create, edit, delete, publish, with the category
+  dropdown and file URL validation (must be `http://`/`https://`) matching
+  what `schema.sql` allows.
+- **Impact numbers** — update the value and verified status of the four
+  homepage metrics. Update-only by design (see `data/cms.js`) — the four
+  rows are fixed because the homepage's counters are wired to those four
+  specific `metric_key` values.
+- **Form submissions** — a UI wrapper around the existing
+  `/admin/submissions/:formType` endpoint.
+
+**Logging in:** enter your deployed backend's URL and your `ADMIN_API_KEY`.
+Neither is saved anywhere (not localStorage, not cookies) — this is
+deliberate, so a shared or public computer never ends up with an admin key
+sitting in browser storage. You'll need to re-enter both each time you open
+the dashboard.
+
+**Where to host it:** anywhere that serves static files — it doesn't need
+to live on the same domain as the backend or the public website. The
+backend's CORS policy allows the `/admin/*` API from any origin, since the
+`ADMIN_API_KEY` check (not the browser's origin) is what actually protects
+those routes.
+
+## Editing CMS content without the dashboard
+
+The dashboard above is the easiest way to manage content, but you can also
+edit content directly in Supabase's Table Editor (Dashboard → Table
+Editor) if you ever need to:
 
 - **stories** — add a row, fill in `slug`, `tag`, `title`, `summary`,
   `body`; set `consent_confirmed = true` only once you've actually
@@ -223,5 +255,3 @@ deliberate safeguard against publishing a child's story before consent is
 actually confirmed. This is a data field, not an enforced technical
 control — it relies on whoever adds a story actually checking it honestly.
 Treat it as a reminder, not a guarantee.
-#   s w e e t - j e s u s - b a c k e n d  
- 
