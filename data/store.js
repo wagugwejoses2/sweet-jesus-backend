@@ -93,4 +93,4 @@ async function list(formType) {
   }));
 }
 
-module.exports = { save, list };
+module.exports = { save, list, getClient };
